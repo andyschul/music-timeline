@@ -11,7 +11,10 @@ import heavyRotation from '../mockdata/heavyRotation.json';
 import jumpBackIn from '../mockdata/jumpBackIn.json';
 import recentlyPlayed from '../mockdata/recentlyPlayed.json';
 
+import AuthContext from '../context/AuthContext';
+
 const Home = () => {
+  const { signOut } = React.useContext(AuthContext);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
   const opacityIn = scrollY.interpolate({
@@ -33,7 +36,7 @@ const Home = () => {
       )}
 
       <Animated.View style={[styles.containerHeader, { opacity: opacityOut }]}>
-        <FontAwesome color={colors.white} name="cog" size={28} />
+        <FontAwesome color={colors.white} name="cog" size={28} onPress={signOut}/>
       </Animated.View>
 
       <Animated.ScrollView

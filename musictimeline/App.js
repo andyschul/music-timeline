@@ -1,58 +1,85 @@
 import * as React from 'react';
-import { StatusBar } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { func } from './src/constants';
-
-// root stack navigation
+import * as SecureStore from 'expo-secure-store';
+import { StatusBar } from 'react-native';
+import authHandler from "./src/utils/authenticationHandler";
+import AuthContext from './src/context/AuthContext';
+import authReducer from './src/reducers/authReducer'
+import SignInScreen from './src/screens/SignIn'
 import RootStack from './src/navigation/RootStack';
 
-// app context state
-import AppState from './src/context/AppState';
-
-const App = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
+export default function App({ navigation }) {
+  const [state, dispatch] = React.useReducer(authReducer,
+    {
+      isLoading: true,
+      isSignout: false,
+      userToken: null,
+    }
+  );
 
   React.useEffect(() => {
-    async function prepare() {
-      try {
-        // keeps the splash screen visible while assets are cached
-        await SplashScreen.preventAutoHideAsync();
+    // Fetch the token from storage then navigate to our appropriate place
+    const bootstrapAsync = async () => {
+      let userToken;
 
-        // pre-load/cache assets: images, fonts, and videos
+      try {
+        // Restore token stored in `SecureStore` or any other encrypted storage
+        await SplashScreen.preventAutoHideAsync();
+        userToken = await SecureStore.getItemAsync('accessToken');
         await func.loadAssetsAsync();
       } catch (e) {
-        // console.warn(e);
-      } finally {
-        // loading is complete
-        setIsLoading(false);
+        // Restoring token failed
       }
-    }
 
-    prepare();
+      // After restoring token, we may need to validate it in production apps
+
+      // This will switch to the App screen or Auth screen and this loading
+      // screen will be unmounted and thrown away.
+      dispatch({ type: 'RESTORE_TOKEN', token: userToken });
+    };
+
+    bootstrapAsync();
   }, []);
 
   React.useEffect(() => {
     // when loading is complete
-    if (isLoading === false) {
+    if (state.isLoading === false) {
       // hide splash function
       const hideSplash = async () => SplashScreen.hideAsync();
 
       // hide splash screen to show app
       hideSplash();
     }
-  }, [isLoading]);
+  }, [state.isLoading]);
 
-  if (isLoading) {
+  const authContext = React.useMemo(
+    () => ({
+      signIn: async (data) => {
+        let token = await authHandler.onLogin();
+        await SecureStore.setItemAsync('accessToken', token);
+        dispatch({ type: 'SIGN_IN', token: token });
+      },
+      signOut: async () => {
+        await SecureStore.deleteItemAsync('accessToken');
+        dispatch({ type: 'SIGN_OUT' })
+      },
+    }),
+    []
+  );
+
+  if (state.isLoading) {
     return null;
   }
 
   return (
-    <AppState>
+    <AuthContext.Provider value={authContext}>
       <StatusBar barStyle="light-content" />
-
-      <RootStack />
-    </AppState>
+      {state.userToken == null ? (
+        <SignInScreen/>
+      ) : (
+        <RootStack />
+      )}
+    </AuthContext.Provider>
   );
-};
-
-export default App;
+}
