@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, gStyle, images } from '../constants';
 
 const albumList = (data, tagline) => {
+  const navigation = useNavigation();
   return (
     <>
     <Text style={styles.tagline}>{tagline}</Text>
@@ -28,11 +29,12 @@ const albumList = (data, tagline) => {
           style={styles.item}
         >
           <View style={styles.image}>
-            {item.image && (
-              <Image source={images[item.image]} style={styles.image} />
+            {item.image_url && (
+              <Image source={{uri:item.image_url}} style={styles.image} />
             )}
           </View>
-          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.artist}>{item.artist_name}</Text>
+          <Text style={styles.title}>{item.name}</Text>
         </TouchableOpacity>
       )}
       showsHorizontalScrollIndicator={false}
@@ -96,8 +98,14 @@ const styles = StyleSheet.create({
     height: 148,
     width: 148
   },
-  title: {
+  artist: {
     ...gStyle.textSpotifyBold12,
+    color: colors.white,
+    marginTop: 4,
+    textAlign: 'center'
+  },
+  title: {
+    ...gStyle.textSpotify12,
     color: colors.white,
     marginTop: 4,
     textAlign: 'center'

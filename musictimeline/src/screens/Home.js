@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors, device, gStyle } from '../constants';
 
@@ -7,14 +7,16 @@ import { colors, device, gStyle } from '../constants';
 import AlbumsHorizontal from '../components/AlbumsHorizontal';
 
 // mock data
-import heavyRotation from '../mockdata/heavyRotation.json';
-import jumpBackIn from '../mockdata/jumpBackIn.json';
-import recentlyPlayed from '../mockdata/recentlyPlayed.json';
-import mockData from '../mockdata/apiCall.json';
+// import heavyRotation from '../mockdata/heavyRotation.json';
+// import jumpBackIn from '../mockdata/jumpBackIn.json';
+// import recentlyPlayed from '../mockdata/recentlyPlayed.json';
+// import mockData from '../mockdata/apiCall.json';
 
 import AuthContext from '../context/AuthContext';
 
 const Home = () => {
+  const [isLoading, setLoading] = React.useState(true);
+  const [data, setData] = React.useState({});
   const { signOut } = React.useContext(AuthContext);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
@@ -30,9 +32,25 @@ const Home = () => {
     extrapolate: 'clamp'
   });
 
-  const timeline = Object.keys(mockData).map((key) => (
-    <AlbumsHorizontal data={mockData[key]} heading={key} />
+  const timeline = Object.keys(data).map((key) => (
+    <AlbumsHorizontal data={data[key]} heading={key} />
   ));
+
+  const getAlbums = async () => {
+    try {
+     const response = await fetch('http://127.0.0.1:5000/');
+     const json = await response.json();
+     setData(json);
+   } catch (error) {
+     console.error(error);
+   } finally {
+     setLoading(false);
+   }
+ }
+
+ React.useEffect(() => {
+   getAlbums();
+ }, []);
 
   return (
     <React.Fragment>
@@ -44,20 +62,23 @@ const Home = () => {
         <FontAwesome color={colors.white} name="cog" size={28} onPress={signOut}/>
       </Animated.View>
 
-      <Animated.ScrollView
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        style={gStyle.container}
-      >
-        <View style={gStyle.spacer16} />
+      {isLoading ? <ActivityIndicator/> : (
+        <Animated.ScrollView
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          style={gStyle.container}
+        >
+          <View style={gStyle.spacer16} />
 
-        {timeline}
+          {timeline}
 
-      </Animated.ScrollView>
+        </Animated.ScrollView>
+      )}
+
     </React.Fragment>
   );
 };

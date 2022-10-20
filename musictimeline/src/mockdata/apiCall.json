@@ -1,81 +1,39 @@
 {
-    "2011-01-30": {
+    "2022-10-11": {
         "singles": [
             {
-                "id": "4N50QyWU1zcBJBDMsppgHm",
-                "name": "Skinny Love",
-                "release_date": "2011-01-30",
+                "id": "5nTSB1dEcWtAtkWnHgOcMR",
+                "name": "Alive (feat. The Moth & The Flame)",
+                "image_url": "https://i.scdn.co/image/ab67616d0000b2733257a0ad4aa2ccad6a24908b",
+                "release_date": "2022-10-11",
                 "album_type": "single",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            }
-        ],
-        "albums": [
-            {
-                "id": "2dpWqqBl9Faf0Bfo8q4F5u",
-                "name": "Birdy",
-                "release_date": "2011-11-07",
-                "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            },
-            {
-                "id": "7j7ykLBxerILBLBc8AICJS",
-                "name": "Birdy",
-                "release_date": "2011-11-07",
-                "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            }
-        ]
-    },
-    "2011-07-15": {
-        "singles": [
-            {
-                "id": "2gpUpXR9lpfsYPniJMCMHI",
-                "name": "Shelter (Photek Remix)",
-                "release_date": "2011-07-15",
-                "album_type": "single",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
+                "artist_id": "2avRYQUWQpIkzJOEkf0MdY",
+                "artist_name": "Kx5"
             }
         ],
         "albums": []
     },
-    "2011-10-28": {
-        "singles": [],
+    "2022-10-14": {
+        "singles": [
+            {
+                "id": "0EspGdWdoWAxa5mBdQ5z55",
+                "name": "EDGING",
+                "image_url": "https://i.scdn.co/image/ab67616d0000b273992db40efc4367bebea586f7",
+                "release_date": "2022-10-14",
+                "album_type": "single",
+                "artist_id": "6FBDaR13swtiWwGhX1WQsP",
+                "artist_name": "blink-182"
+            }
+        ],
         "albums": [
             {
-                "id": "1UVggFtdVPqHy5WamYFu6w",
-                "name": "Beautiful Lies",
-                "release_date": "2016-03-25",
+                "id": "0FYvMdfTfYJxnJnKs1wDb0",
+                "name": "It\'s Only Me",
+                "image_url": "https://i.scdn.co/image/ab67616d0000b27366b04b41fa6f8908dce86695",
+                "release_date": "2022-10-14",
                 "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            },
-            {
-                "id": "2uNFpEVey5RsxzTdoDmjiz",
-                "name": "Beautiful Lies (Deluxe)",
-                "release_date": "2016-03-25",
-                "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            },
-            {
-                "id": "5TxrdDAUkipqcb4zGnnwkz",
-                "name": "Beautiful Lies (Deluxe)",
-                "release_date": "2016-03-25",
-                "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
-            },
-            {
-                "id": "5wNnopxjgSKVvHTIcBpV8Q",
-                "name": "Beautiful Lies",
-                "release_date": "2016-03-25",
-                "album_type": "album",
-                "artist_id": "2WX2uTcsvV5OnS0inACecP",
-                "artist_name": "Birdy"
+                "artist_id": "5f7VJjfbwm532GiveGC0ZK",
+                "artist_name": "Lil Baby"
             }
         ]
     }
