@@ -1,0 +1,82 @@
+{
+    "2011-01-30": {
+        "singles": [
+            {
+                "id": "4N50QyWU1zcBJBDMsppgHm",
+                "name": "Skinny Love",
+                "release_date": "2011-01-30",
+                "album_type": "single",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            }
+        ],
+        "albums": [
+            {
+                "id": "2dpWqqBl9Faf0Bfo8q4F5u",
+                "name": "Birdy",
+                "release_date": "2011-11-07",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            },
+            {
+                "id": "7j7ykLBxerILBLBc8AICJS",
+                "name": "Birdy",
+                "release_date": "2011-11-07",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            }
+        ]
+    },
+    "2011-07-15": {
+        "singles": [
+            {
+                "id": "2gpUpXR9lpfsYPniJMCMHI",
+                "name": "Shelter (Photek Remix)",
+                "release_date": "2011-07-15",
+                "album_type": "single",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            }
+        ],
+        "albums": []
+    },
+    "2011-10-28": {
+        "singles": [],
+        "albums": [
+            {
+                "id": "1UVggFtdVPqHy5WamYFu6w",
+                "name": "Beautiful Lies",
+                "release_date": "2016-03-25",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            },
+            {
+                "id": "2uNFpEVey5RsxzTdoDmjiz",
+                "name": "Beautiful Lies (Deluxe)",
+                "release_date": "2016-03-25",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            },
+            {
+                "id": "5TxrdDAUkipqcb4zGnnwkz",
+                "name": "Beautiful Lies (Deluxe)",
+                "release_date": "2016-03-25",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            },
+            {
+                "id": "5wNnopxjgSKVvHTIcBpV8Q",
+                "name": "Beautiful Lies",
+                "release_date": "2016-03-25",
+                "album_type": "album",
+                "artist_id": "2WX2uTcsvV5OnS0inACecP",
+                "artist_name": "Birdy"
+            }
+        ]
+    }
+}

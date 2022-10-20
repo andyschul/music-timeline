@@ -11,36 +11,44 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, gStyle, images } from '../constants';
 
+const albumList = (data, tagline) => {
+  return (
+    <>
+    <Text style={styles.tagline}>{tagline}</Text>
+    <FlatList
+      contentContainerStyle={styles.containerContent}
+      data={data}
+      horizontal
+      keyExtractor={({ id }) => id.toString()}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          activeOpacity={gStyle.activeOpacity}
+          hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
+          onPress={() => navigation.navigate('Album', { title: item.title })}
+          style={styles.item}
+        >
+          <View style={styles.image}>
+            {item.image && (
+              <Image source={images[item.image]} style={styles.image} />
+            )}
+          </View>
+          <Text style={styles.title}>{item.title}</Text>
+        </TouchableOpacity>
+      )}
+      showsHorizontalScrollIndicator={false}
+    />
+  </>
+  )
+}
+
 const AlbumsHorizontal = ({ data, heading, tagline }) => {
   const navigation = useNavigation();
-
   return (
     <View style={styles.container}>
       {heading && <Text style={styles.heading}>{heading}</Text>}
-      {tagline && <Text style={styles.tagline}>{tagline}</Text>}
 
-      <FlatList
-        contentContainerStyle={styles.containerContent}
-        data={data}
-        horizontal
-        keyExtractor={({ id }) => id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={gStyle.activeOpacity}
-            hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
-            onPress={() => navigation.navigate('Album', { title: item.title })}
-            style={styles.item}
-          >
-            <View style={styles.image}>
-              {item.image && (
-                <Image source={images[item.image]} style={styles.image} />
-              )}
-            </View>
-            <Text style={styles.title}>{item.title}</Text>
-          </TouchableOpacity>
-        )}
-        showsHorizontalScrollIndicator={false}
-      />
+      {data.singles.length > 0 && albumList(data.singles, "Singles")}
+      {data.albums.length > 0 && albumList(data.albums, "Albums")}
     </View>
   );
 };

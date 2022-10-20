@@ -10,6 +10,7 @@ import AlbumsHorizontal from '../components/AlbumsHorizontal';
 import heavyRotation from '../mockdata/heavyRotation.json';
 import jumpBackIn from '../mockdata/jumpBackIn.json';
 import recentlyPlayed from '../mockdata/recentlyPlayed.json';
+import mockData from '../mockdata/apiCall.json';
 
 import AuthContext from '../context/AuthContext';
 
@@ -28,6 +29,10 @@ const Home = () => {
     outputRange: [1, 0],
     extrapolate: 'clamp'
   });
+
+  const timeline = Object.keys(mockData).map((key) => (
+    <AlbumsHorizontal data={mockData[key]} heading={key} />
+  ));
 
   return (
     <React.Fragment>
@@ -50,19 +55,8 @@ const Home = () => {
       >
         <View style={gStyle.spacer16} />
 
-        <AlbumsHorizontal data={recentlyPlayed} heading="Recently played" />
+        {timeline}
 
-        <AlbumsHorizontal
-          data={heavyRotation}
-          heading="Your heavy rotation"
-          tagline="The music you've had on repeat this month."
-        />
-
-        <AlbumsHorizontal
-          data={jumpBackIn}
-          heading="Jump back in"
-          tagline="Your top listens from the past few months."
-        />
       </Animated.ScrollView>
     </React.Fragment>
   );
