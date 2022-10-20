@@ -18,8 +18,6 @@ CREATE KEYSPACE IF NOT EXISTS music
 '''
 session.execute(create_keyspace)
 
-# session.execute('USE music')
-
 drop_table = '''
 DROP TABLE IF EXISTS music.albums
 '''
@@ -32,6 +30,7 @@ CREATE TABLE IF NOT EXISTS music.albums (
    name text, 
    release_date text, 
    album_type text,
+   album_group text,
    uri text,
    artist_id text, 
    artist_uri text, 
@@ -42,23 +41,25 @@ CREATE TABLE IF NOT EXISTS music.albums (
 session.execute(create_table)
 
 
-birdy_uri = '2WX2uTcsvV5OnS0inACecP'
-results = spotify.artist_albums(birdy_uri, album_type='album')
+artist_id = '2WX2uTcsvV5OnS0inACecP'
+results = spotify.artist_albums(artist_id)
 albums = results['items']
 while results['next']:
     results = spotify.next(results)
     albums.extend(results['items'])
 
 for album in albums:
+    if album['release_date_precision'] != 'day':
+        continue
     for artist in album['artists']:
         insert_into = '''
-        INSERT INTO music.albums (id, href, name, release_date, album_type, uri, artist_id, artist_uri, artist_name, artist_href) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');
-        '''.format(album['id'], album['href'], album['name'], album['release_date'], album['album_type'], album['uri'], artist['id'], artist['uri'], artist['name'], artist['href'])
+        INSERT INTO music.albums (id, href, name, release_date, album_type, album_group, uri, artist_id, artist_uri, artist_name, artist_href) VALUES ('{}', '{}', $${}$$, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');
+        '''.format(album['id'], album['href'], album['name'], album['release_date'], album['album_type'], album['album_group'], album['uri'], artist['id'], artist['uri'], artist['name'], artist['href'])
         session.execute(insert_into)
 
 
 select_all = '''
-SELECT release_date, name, artist_name, name FROM music.albums WHERE release_date >= '2008-02-01' AND release_date < '2015-02-01' AND artist_id IN ('2WX2uTcsvV5OnS0inACecP');
+SELECT id, name, release_date, album_type, artist_id, artist_name FROM music.albums WHERE release_date >= '2000-02-01' AND artist_id IN ('2WX2uTcsvV5OnS0inACecP');
 '''
 rows = session.execute(select_all)
 
