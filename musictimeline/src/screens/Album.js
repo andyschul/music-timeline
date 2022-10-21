@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Switch,
   Text,
-  View
+  View,
+  ActivityIndicator
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors, device, gStyle, images } from '../constants';
@@ -26,7 +28,9 @@ import albums from '../mockdata/albums';
 import Context from '../context';
 
 const Album = ({ navigation, route }) => {
-  const { title } = route.params;
+  const [isLoading, setLoading] = React.useState(true);
+  const [album, setAlbum] = React.useState({});
+  const { id } = route.params;
 
   // get main app state
   const { currentSongData, showMusicBar, updateState } =
@@ -38,7 +42,26 @@ const Album = ({ navigation, route }) => {
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
   // ui state
-  const album = albums[title] || null;
+  // const album = albums[title] || null;
+
+  const getAlbum = async () => {
+    try {
+      let token = await SecureStore.getItemAsync('accessToken');
+      const response = await fetch(`https://api.spotify.com/v1/albums/${id}`, {
+      headers: {"Authorization" : `Bearer ${token}`}
+     });
+     const json = await response.json();
+     setAlbum(json);
+   } catch (error) {
+     console.error(error);
+   } finally {
+     setLoading(false);
+   }
+ }
+
+  React.useEffect(() => {
+    getAlbum();
+  }, []);
 
   const onToggleDownloaded = (val) => {
     // if web
@@ -81,7 +104,7 @@ const Album = ({ navigation, route }) => {
   if (album === null) {
     return (
       <View style={[gStyle.container, gStyle.flexCenter]}>
-        <Text style={{ color: colors.white }}>{`Album: ${title}`}</Text>
+        <Text style={{ color: colors.white }}>{`Album: ${id}`}</Text>
       </View>
     );
   }
@@ -103,7 +126,9 @@ const Album = ({ navigation, route }) => {
   });
 
   return (
-    <View style={gStyle.container}>
+    <React.Fragment>
+    {isLoading ? <ActivityIndicator/> : (
+      <View style={gStyle.container}>
       {showMusicBar === false && (
         <BlurView intensity={99} style={styles.blurview} tint="dark" />
       )}
@@ -120,7 +145,7 @@ const Album = ({ navigation, route }) => {
             onPress={() => navigation.goBack(null)}
           />
           <Animated.View style={{ opacity: opacityShuffle }}>
-            <Text style={styles.headerTitle}>{album.title}</Text>
+            <Text style={styles.headerTitle}>{album.name}</Text>
           </Animated.View>
           <TouchIcon
             icon={<Feather color={colors.white} name="more-horizontal" />}
@@ -141,16 +166,16 @@ const Album = ({ navigation, route }) => {
           <LinearGradient fill={album.backgroundColor} />
         </View>
         <View style={styles.containerImage}>
-          <Image source={images[album.image]} style={styles.image} />
+          <Image source={{uri:album.images[0].url}} style={styles.image} />
         </View>
         <View style={styles.containerTitle}>
           <Text ellipsizeMode="tail" numberOfLines={1} style={styles.title}>
-            {album.title}
+            {album.name}
           </Text>
         </View>
         <View style={styles.containerAlbum}>
           <Text style={styles.albumInfo}>
-            {`Album by ${album.artist} · ${album.released}`}
+            {`Album by ${album.artists[0].name} · ${album.release_date}`}
           </Text>
         </View>
       </View>
@@ -193,18 +218,17 @@ const Album = ({ navigation, route }) => {
           </View>
 
           {album.tracks &&
-            album.tracks.map((track) => (
+            album.tracks.items.map((track) => (
               <LineItemSong
-                active={song === track.title}
+                active={song === track.name}
                 downloaded={downloaded}
-                key={track.title}
+                key={track.name}
                 onPress={onChangeSong}
                 songData={{
-                  album: album.title,
+                  album: album.name,
                   artist: album.artist,
-                  image: album.image,
                   length: track.seconds,
-                  title: track.title
+                  title: track.name
                 }}
               />
             ))}
@@ -212,6 +236,8 @@ const Album = ({ navigation, route }) => {
         <View style={gStyle.spacer16} />
       </Animated.ScrollView>
     </View>
+    )}
+  </React.Fragment>
   );
 };
 

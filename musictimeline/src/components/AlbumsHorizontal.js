@@ -25,7 +25,7 @@ const albumList = (data, tagline) => {
         <TouchableOpacity
           activeOpacity={gStyle.activeOpacity}
           hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}
-          onPress={() => navigation.navigate('Album', { title: item.title })}
+          onPress={() => navigation.navigate('Album', { id: item.id })}
           style={styles.item}
         >
           <View style={styles.image}>
