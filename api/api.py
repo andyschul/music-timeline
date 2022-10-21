@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, request
 from cassandra.cluster import Cluster
 import json
+import requests
 
 cluster = Cluster()
 session = cluster.connect()
@@ -9,9 +10,11 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
+    followers = requests.get('https://api.spotify.com/v1/me/following?type=artist', headers={'Authorization': request.headers['Authorization']})
+    artist_ids = ', '.join(["'{}'".format(artist['id']) for artist in followers.json()['artists']['items']])
     select_all = '''
-    SELECT id, name, release_date, album_type, artist_id, artist_name, image_url FROM music.albums WHERE release_date >= '2022-10-01' AND artist_id IN ('2WX2uTcsvV5OnS0inACecP','6FBDaR13swtiWwGhX1WQsP','2avRYQUWQpIkzJOEkf0MdY','5f7VJjfbwm532GiveGC0ZK');
-    '''
+    SELECT id, name, release_date, album_type, artist_id, artist_name, image_url FROM music.albums WHERE release_date >= '2022-10-01' AND artist_id IN ({});
+    '''.format(artist_ids)
     rows = session.execute(select_all)
 
     result = {}

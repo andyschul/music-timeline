@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Animated, StyleSheet, View, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors, device, gStyle } from '../constants';
 
@@ -38,7 +39,10 @@ const Home = () => {
 
   const getAlbums = async () => {
     try {
-     const response = await fetch('http://127.0.0.1:5000/');
+      let token = await SecureStore.getItemAsync('accessToken');
+      const response = await fetch('http://127.0.0.1:5000/', {
+      headers: {"Authorization" : `Bearer ${token}`}
+     });
      const json = await response.json();
      setData(json);
    } catch (error) {
