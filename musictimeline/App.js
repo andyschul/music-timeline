@@ -27,12 +27,20 @@ export default function App({ navigation }) {
         // Restore token stored in `SecureStore` or any other encrypted storage
         await SplashScreen.preventAutoHideAsync();
         userToken = await SecureStore.getItemAsync('accessToken');
+        expDate = await SecureStore.getItemAsync('accessTokenExpirationDate');
+        refreshToken = await SecureStore.getItemAsync('refreshToken');
         await func.loadAssetsAsync();
       } catch (e) {
         // Restoring token failed
+        console.log('Restoring token failed');
       }
 
       // After restoring token, we may need to validate it in production apps
+      if (expDate < new Date().toISOString()) {
+        let result = await authHandler.refreshLogin(refreshToken);
+        await SecureStore.setItemAsync('accessToken', result.accessToken);
+        await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+      }
 
       // This will switch to the App screen or Auth screen and this loading
       // screen will be unmounted and thrown away.
@@ -56,9 +64,19 @@ export default function App({ navigation }) {
   const authContext = React.useMemo(
     () => ({
       signIn: async (data) => {
-        let token = await authHandler.onLogin();
-        await SecureStore.setItemAsync('accessToken', token);
-        dispatch({ type: 'SIGN_IN', token: token });
+        let result = await authHandler.onLogin();
+        await SecureStore.setItemAsync('accessToken', result.accessToken);
+        await SecureStore.setItemAsync('accessTokenExpirationDate', result.accessTokenExpirationDate);
+        await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+        dispatch({ type: 'SIGN_IN', token: result.accessToken });
+      },
+      refreshToken: async (data) => {
+        let refreshToken = await SecureStore.getItemAsync('refreshToken');
+        let result = await authHandler.refreshLogin(refreshToken);
+        await SecureStore.setItemAsync('accessToken', result.accessToken);
+        await SecureStore.setItemAsync('accessTokenExpirationDate', result.accessTokenExpirationDate);
+        await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+        dispatch({ type: 'RESTORE_TOKEN', token: result.accessToken });
       },
       signOut: async () => {
         await SecureStore.deleteItemAsync('accessToken');

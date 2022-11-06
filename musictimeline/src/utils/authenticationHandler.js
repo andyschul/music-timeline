@@ -27,17 +27,21 @@ class AuthenticationHandler {
   async onLogin() {
     try {
       const result = await authorize(this.spotifyAuthConfig);
-      return result.accessToken;
+      return result;
     } catch (error) {
       console.log(JSON.stringify(error));
-    } 
+    }
   }
 
   async refreshLogin(refreshToken) {
-    const result = await refresh(this.spotifyAuthConfig, {
-      refreshToken: refreshToken,
-    });
-    return result;
+    try {
+      const result = await refresh(this.spotifyAuthConfig, {
+        refreshToken: refreshToken,
+      });
+      return result;
+    } catch (error) {
+      console.log(JSON.stringify(error));
+    }
   }
 
 }

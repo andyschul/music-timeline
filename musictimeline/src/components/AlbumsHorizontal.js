@@ -62,7 +62,7 @@ AlbumsHorizontal.defaultProps = {
 
 AlbumsHorizontal.propTypes = {
   // required
-  data: PropTypes.array.isRequired,
+  data: PropTypes.object.isRequired,
 
   // optional
   heading: PropTypes.string,

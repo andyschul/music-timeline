@@ -18,7 +18,7 @@ import AuthContext from '../context/AuthContext';
 const Home = () => {
   const [isLoading, setLoading] = React.useState(true);
   const [data, setData] = React.useState({});
-  const { signOut } = React.useContext(AuthContext);
+  const { signOut, refreshToken } = React.useContext(AuthContext);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
   const opacityIn = scrollY.interpolate({
@@ -34,11 +34,16 @@ const Home = () => {
   });
 
   const timeline = Object.keys(data).map((key) => (
-    <AlbumsHorizontal data={data[key]} heading={key} />
+    <AlbumsHorizontal key={key} data={data[key]} heading={key} />
   ));
 
   const getAlbums = async () => {
     try {
+      let expDate = await SecureStore.getItemAsync('accessTokenExpirationDate');
+      if (expDate < new Date().toISOString()) {
+        await refreshToken();
+      }
+
       let token = await SecureStore.getItemAsync('accessToken');
       const response = await fetch('http://127.0.0.1:5000/', {
       headers: {"Authorization" : `Bearer ${token}`}
