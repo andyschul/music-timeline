@@ -37,14 +37,6 @@ const BarMusicPlayer = ({ song }) => {
             <Text style={styles.title}>{`${song.title} · `}</Text>
             <Text style={styles.artist}>{song.artist}</Text>
           </View>
-          <View style={[gStyle.flexRowCenter, gStyle.mTHalf]}>
-            <FontAwesome
-              color={colors.brandPrimary}
-              name="bluetooth-b"
-              size={14}
-            />
-            <Text style={styles.device}>Caleb&apos;s Beatsx</Text>
-          </View>
         </View>
       )}
 

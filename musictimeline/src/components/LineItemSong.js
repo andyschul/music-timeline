@@ -7,6 +7,9 @@ import { colors, gStyle } from '../constants';
 const LineItemSong = ({ active, downloaded, onPress, songData }) => {
   const activeColor = active ? colors.brandPrimary : colors.white;
 
+  let dur = String(new Date(songData['duration']).toISOString()).substring(14,19);
+  dur = String(parseInt(dur.substring(0,2))).concat(dur.substring(2,5))
+  // alert(songData['duration'])
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -28,7 +31,7 @@ const LineItemSong = ({ active, downloaded, onPress, songData }) => {
       </TouchableOpacity>
 
       <View style={styles.containerRight}>
-        <Feather color={colors.greyLight} name="more-horizontal" size={20} />
+        <Text style={styles.artist}>{dur}</Text>
       </View>
     </View>
   );
@@ -47,7 +50,9 @@ LineItemSong.propTypes = {
     artist: PropTypes.string.isRequired,
     image: PropTypes.string.isRequired,
     length: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired
+    title: PropTypes.string.isRequired,
+    album_uri: PropTypes.string.isRequired,
+    position: PropTypes.number.isRequired
   }).isRequired,
 
   // optional

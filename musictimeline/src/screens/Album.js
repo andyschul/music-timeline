@@ -27,17 +27,18 @@ import albums from '../mockdata/albums';
 // context
 import Context from '../context';
 
+import { getUniqueId, getManufacturer } from 'react-native-device-info';
+
 const Album = ({ navigation, route }) => {
   const [isLoading, setLoading] = React.useState(true);
   const [album, setAlbum] = React.useState({});
   const { id } = route.params;
 
   // get main app state
-  const { currentSongData, showMusicBar, updateState } =
-    React.useContext(Context);
+  const { currentSongData, showMusicBar, updateState } = React.useContext(Context);
 
   // local state
-  const [downloaded, setDownloaded] = React.useState(false);
+  // const [downloaded, setDownloaded] = React.useState(false);
   const [song, setSong] = React.useState(currentSongData.title);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
@@ -51,6 +52,25 @@ const Album = ({ navigation, route }) => {
       headers: {"Authorization" : `Bearer ${token}`}
      });
      const json = await response.json();
+
+    //  set album duration
+     let albumDuration = json.tracks.items.reduce((accumulator, object) => {
+        return accumulator + object.duration_ms;
+     }, 0);
+     albumDuration = new Date(albumDuration).toISOString().substring(11, 16);
+     albumDuration = albumDuration.split(":")
+
+     if (parseInt(albumDuration[0]) === 0) {
+      albumDuration = String(parseInt(albumDuration[1])).concat("m ")
+     } else {
+      albumDuration = String(parseInt(albumDuration[0])).concat("h ").concat(String(parseInt(albumDuration[1])).concat("m "))
+     }
+     json['duration'] = albumDuration;
+
+     //  set album artists
+     let albumArtists = json.artists.map((artist) => (artist.name)).join(', ');
+     json['albumArtists'] = albumArtists;
+
      setAlbum(json);
    } catch (error) {
      console.error(error);
@@ -92,12 +112,36 @@ const Album = ({ navigation, route }) => {
     }
   };
 
-  const onChangeSong = (songData) => {
+  playSongSpotify = async (songData) => {
+    let token = SecureStore.getItemAsync('accessToken');
+      let deviceId = await getUniqueId();
+      const response = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+      headers: {"Authorization" : `Bearer ${token}`, "Content-Type": "application/json"},
+      method: 'post',
+      query: {
+        "device_id": deviceId
+      },
+      body: {
+          "context_uri": songData.uri,
+          "offset": {
+            "position": songData.position
+          },
+          "position_ms": 0
+        }
+      });
+  }
+
+  const onChangeSong = async (songData) => {
     // update local state
     setSong(songData.title);
 
     // update main state
     updateState('currentSongData', songData);
+
+    await playSongSpotify({
+      uri: songData.album_uri,
+      position: songData.position
+    });
   };
 
   // album data not set?
@@ -144,6 +188,9 @@ const Album = ({ navigation, route }) => {
             icon={<Feather color={colors.white} name="chevron-left" />}
             onPress={() => navigation.goBack(null)}
           />
+          <Text style={styles.albumInfo}>
+            {`${album.release_date}`}
+          </Text>
           <Animated.View style={{ opacity: opacityShuffle }}>
             <Text style={styles.headerTitle}>{album.name}</Text>
           </Animated.View>
@@ -175,7 +222,10 @@ const Album = ({ navigation, route }) => {
         </View>
         <View style={styles.containerAlbum}>
           <Text style={styles.albumInfo}>
-            {`Album by ${album.artists[0].name} · ${album.release_date}`}
+            {`${album.albumArtists}`}
+          </Text>
+          <Text style={styles.albumInfo}>
+            {`${album.duration}`}
           </Text>
         </View>
       </View>
@@ -196,17 +246,19 @@ const Album = ({ navigation, route }) => {
           >
             <LinearGradient fill={colors.black20} height={50} />
           </Animated.View>
+          <Text style={styles.albumInfo}>
+          </Text>
           <View style={styles.containerShuffle}>
             <TouchText
               onPress={() => null}
               style={styles.btn}
               styleText={styles.btnText}
-              text="Shuffle Play"
+              text="Play"
             />
           </View>
         </View>
         <View style={styles.containerSongs}>
-          <View style={styles.row}>
+          {/* <View style={styles.row}>
             <Text style={styles.downloadText}>
               {downloaded ? 'Downloaded' : 'Download'}
             </Text>
@@ -215,20 +267,23 @@ const Album = ({ navigation, route }) => {
               onValueChange={(val) => onToggleDownloaded(val)}
               value={downloaded}
             />
-          </View>
+          </View> */}
 
           {album.tracks &&
             album.tracks.items.map((track) => (
               <LineItemSong
                 active={song === track.name}
-                downloaded={downloaded}
+                // downloaded={downloaded}
                 key={track.name}
                 onPress={onChangeSong}
                 songData={{
                   album: album.name,
-                  artist: album.artist,
-                  length: track.seconds,
-                  title: track.name
+                  artist: track.artists.map((artist) => (artist.name)).join(', '),
+                  image: album.images[0].url,
+                  duration: track.duration_ms,
+                  title: track.name,
+                  album_uri: album.uri,
+                  position: track.track_number
                 }}
               />
             ))}
@@ -291,6 +346,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: '100%',
+    height:'100%',
     zIndex: device.web ? 5 : 0
   },
   containerImage: {
@@ -301,9 +357,9 @@ const styles = StyleSheet.create({
     zIndex: device.web ? 20 : 0
   },
   image: {
-    height: 148,
+    height: 150,
     marginBottom: device.web ? 0 : 16,
-    width: 148
+    width: 150
   },
   containerTitle: {
     marginTop: device.web ? 8 : 0,
@@ -322,7 +378,9 @@ const styles = StyleSheet.create({
   albumInfo: {
     ...gStyle.textSpotify12,
     color: colors.greyInactive,
-    marginBottom: 48
+    marginTop: 7,
+    marginBottom: 3,
+    textAlign: 'center'
   },
   containerScroll: {
     paddingTop: 89
@@ -346,8 +404,8 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: colors.brandPrimary,
     borderRadius: 25,
-    height: 50,
-    width: 220
+    height: 35,
+    width: 110
   },
   btnText: {
     ...gStyle.textSpotifyBold16,

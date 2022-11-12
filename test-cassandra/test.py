@@ -96,7 +96,8 @@ def get_birdy():
   res = astra_client.rest.search_table(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_TABLE, query=query, options=options)
   print(res)
 
-get_birdy()
+# get_birdy()
+load_birdy()
 
 # cluster = Cluster()
 # session = cluster.connect()
