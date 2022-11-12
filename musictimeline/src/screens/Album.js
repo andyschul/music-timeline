@@ -11,7 +11,6 @@ import {
   ActivityIndicator
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors, device, gStyle, images } from '../constants';
 
@@ -23,6 +22,15 @@ import TouchText from '../components/TouchText';
 
 // mock data
 import albums from '../mockdata/albums';
+import yourLibrary from '../mockdata/menuYourLibrary.json';
+
+import {
+  Feather,
+  Entypo,
+  MaterialIcons,
+  MaterialCommunityIcons,
+  FontAwesome
+} from '@expo/vector-icons';
 
 // context
 import Context from '../context';
@@ -221,12 +229,27 @@ const Album = ({ navigation, route }) => {
           </Text>
         </View>
         <View style={styles.containerAlbum}>
-          <Text style={styles.albumInfo}>
-            {`${album.albumArtists}`}
-          </Text>
-          <Text style={styles.albumInfo}>
-            {`${album.duration}`}
-          </Text>
+          <View style={styles.spaceArtistProducer}>
+            <View style={styles.entity}>
+              <Feather color={colors.greyInactive} name={"user"} size={17} /> 
+              <Text style={styles.albumInfo}>
+                {`${album.albumArtists}`}
+              </Text>
+            </View>
+            <View style={styles.entity}>
+              <Image
+                style={{
+                  width: 15,
+                  height: 15,
+                  borderRadius: 0,
+                }}
+                source={require('../assets/producer_icon.png')} 
+              />
+              <Text style={styles.albumInfo}>
+                MIN
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
 
@@ -246,8 +269,6 @@ const Album = ({ navigation, route }) => {
           >
             <LinearGradient fill={colors.black20} height={50} />
           </Animated.View>
-          <Text style={styles.albumInfo}>
-          </Text>
           <View style={styles.containerShuffle}>
             <TouchText
               onPress={() => null}
@@ -255,6 +276,9 @@ const Album = ({ navigation, route }) => {
               styleText={styles.btnText}
               text="Play"
             />
+            <Text style={styles.albumInfo}>
+              {`${album.duration}`}
+            </Text>
           </View>
         </View>
         <View style={styles.containerSongs}>
@@ -386,7 +410,7 @@ const styles = StyleSheet.create({
     paddingTop: 89
   },
   containerSticky: {
-    marginTop: device.iPhoneNotch ? 238 : 194
+    marginTop: device.iPhoneNotch ? 320 : 194
   },
   containerShuffle: {
     alignItems: 'center',
@@ -424,6 +448,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     width: '100%'
+  },
+  entity: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'column',
+    padding: 5
+  },
+  spaceArtistProducer: {
+    justifyContent: 'space-between',
+    flexDirection: 'column'
   },
   downloadText: {
     ...gStyle.textSpotifyBold18,
