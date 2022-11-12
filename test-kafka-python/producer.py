@@ -25,22 +25,22 @@
 from confluent_kafka import Producer, KafkaError
 import json
 import ccloud_lib
-
+import os
 
 if __name__ == '__main__':
-
-    # Read arguments and configurations and initialize
-    args = ccloud_lib.parse_args()
-    config_file = args.config_file
-    topic = args.topic
-    conf = ccloud_lib.read_ccloud_config(config_file)
-
     # Create Producer instance
-    producer_conf = ccloud_lib.pop_schema_registry_params_from_config(conf)
+    producer_conf = {
+        'bootstrap.servers': os.environ['KAFKA_BOOTSTRAP_SERVERS'],
+        'security.protocol': os.environ['KAFKA_SECURITY_PROTOCOL'],
+        'sasl.mechanisms': os.environ['KAFKA_SASL_MECHANISMS'],
+        'sasl.username': os.environ['KAFKA_SASL_USERNAME'],
+        'sasl.password': os.environ['KAFKA_SASL_PASSWORD'],
+        'session.timeout.ms': os.environ['KAFKA_SESSION_TIMEOUT']
+    }
     producer = Producer(producer_conf)
-
+    topic = 'load-new-artists'
     # Create topic if needed
-    ccloud_lib.create_topic(conf, topic)
+    ccloud_lib.create_topic(producer_conf, topic)
 
     delivered_records = 0
 

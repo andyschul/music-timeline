@@ -2,6 +2,7 @@ from flask import Flask, request
 from confluent_kafka import Producer, KafkaError
 import json
 import requests
+from confluent_kafka import Producer, KafkaError
 from astrapy.client import create_astra_client
 import os
 
@@ -10,8 +11,6 @@ ASTRA_DB_REGION = os.environ['ASTRA_DB_REGION']
 ASTRA_DB_APPLICATION_TOKEN = os.environ['ASTRA_DB_APPLICATION_TOKEN']
 ASTRA_DB_KEYSPACE = 'music'
 ASTRA_DB_TABLE = 'albums'
-SPOTIFY_CLIENT_ID = os.environ['SPOTIFY_CLIENT_ID']
-SPOTIFY_CLIENT_SECRET = os.environ['SPOTIFY_CLIENT_SECRET']
 
 headers = {
   'content-type': 'application/json',
@@ -22,17 +21,16 @@ astra_client = create_astra_client(astra_database_id=ASTRA_DB_ID,
                                    astra_database_region=ASTRA_DB_REGION,
                                    astra_application_token=ASTRA_DB_APPLICATION_TOKEN)
 
-# TODO: integrate kafka
-# topic = 'test1'
-# conf = ccloud_lib.read_ccloud_config(Path(__file__).parent / './.kafka.config')
-# api_conf = ccloud_lib.read_ccloud_config(Path(__file__).parent / './.api.config')
-
-# # Create Producer instance
-# producer_conf = ccloud_lib.pop_schema_registry_params_from_config(conf)
-# producer = Producer(producer_conf)
-
-# # Create topic if needed
-# ccloud_lib.create_topic(conf, topic)
+producer_conf = {
+    'bootstrap.servers': os.environ['KAFKA_BOOTSTRAP_SERVERS'],
+    'security.protocol': os.environ['KAFKA_SECURITY_PROTOCOL'],
+    'sasl.mechanisms': os.environ['KAFKA_SASL_MECHANISMS'],
+    'sasl.username': os.environ['KAFKA_SASL_USERNAME'],
+    'sasl.password': os.environ['KAFKA_SASL_PASSWORD'],
+    'session.timeout.ms': os.environ['KAFKA_SESSION_TIMEOUT']
+}
+producer = Producer(producer_conf)
+topic = 'load-new-artists'
 
 app = Flask(__name__)
 
@@ -40,13 +38,14 @@ app = Flask(__name__)
 def home():
     followers = requests.get('https://api.spotify.com/v1/me/following?type=artist', headers={'Authorization': request.headers['Authorization']})
     artist_ids = [artist['id'] for artist in followers.json()['artists']['items']]
-    # producer.produce(topic, key="spotify", value=json.dumps({'artist_ids': artist_ids}))
+
+    producer.produce(topic, key="spotify", value=json.dumps({'artist_ids': artist_ids}))
 
     query = {
         'artist_id': {'$in': artist_ids},
-        'release_date': {'$gt': '2010-10-01'}
+        'release_date': {'$gt': '2000-10-01'}
     }
-    options = {'fields': 'id,name,release_date,album_type,artist_id,artist_name,image_url'}
+    options = {'page-size': 100}
     res = astra_client.rest.search_table(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_TABLE, query=query, options=options)
 
     result = {}
