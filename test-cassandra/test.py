@@ -4,6 +4,7 @@ import requests
 import json
 from astrapy.client import create_astra_client
 import os
+from cleaner import data_cleaner
 
 DISCOGS_CONSUMER_ID = os.environ['DISCOGS_CONSUMER_ID']
 DISCOGS_CONSUMER_SECRET = os.environ['DISCOGS_CONSUMER_SECRET']
@@ -131,15 +132,12 @@ def load_artist(artist_id):
       results = spotify.next(results)
       albums.extend(results['items'])
 
-  # TODO: Remove clean albums from results
-
+  albums = data_cleaner(spotify, albums)
   count = 0
   for album in albums:
     if count > 2:
       break
     count += 1
-    if album['release_date_precision'] != 'day' or album['album_type'] == 'compilation':
-        continue
     data = {
       'id': album['id'],
       'href': album['href'],
@@ -158,6 +156,7 @@ def load_artist(artist_id):
       'artist_image': artist['images'][0]['url'],
       'artist_genres': artist['genres']
     }
+
     # load each album into cassandra
     row = astra_client.rest.add_row(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_ALBUMS_TABLE, row=data)
     print(row)
@@ -199,6 +198,6 @@ def artist_is_loaded(artist_id):
 # create_albums_table()
 # delete_artists_table()
 # create_artists_table()
-# load_artist(big_sean_id)
+# load_artist()
 # get_artist(eminem_id)
 # print(artist_is_loaded(big_sean_id))
