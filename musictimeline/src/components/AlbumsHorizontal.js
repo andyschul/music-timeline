@@ -11,6 +11,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, gStyle, images } from '../constants';
 
+const displayArtists = (artists) => {
+  return artists.map(a => a['name']).join(', ')
+}
+
+const displayAppearances = (artists) => {
+  if (!artists.length) {
+    return ''
+  }
+  return `Incl: ${artists.join(', ')}`;
+}
+
 const albumList = (data, tagline) => {
   const navigation = useNavigation();
   return (
@@ -33,8 +44,9 @@ const albumList = (data, tagline) => {
               <Image source={{uri:item.image_url}} style={styles.image} />
             )}
           </View>
-          <Text style={styles.artist}>{item.artist_name}</Text>
+          <Text style={styles.artist}>{displayArtists(item.artists)}</Text>
           <Text style={styles.title}>{item.name}</Text>
+          <Text style={styles.title}>{displayAppearances(item.appearances_by)}</Text>
         </TouchableOpacity>
       )}
       showsHorizontalScrollIndicator={false}
