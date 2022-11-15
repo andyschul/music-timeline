@@ -15,11 +15,24 @@ import AlbumsHorizontal from '../components/AlbumsHorizontal';
 
 import AuthContext from '../context/AuthContext';
 
+const DAYS_PER_REQUEST = 90;
+
+const decreaseDate = (d) => {
+  d.setDate(d.getDate()-DAYS_PER_REQUEST);
+  return d;
+}
+
 const Home = () => {
   const [isLoading, setLoading] = React.useState(true);
-  const [data, setData] = React.useState({});
+  const [data, setData] = React.useState([]);
+  const [fromDate, setFromDate] = React.useState(() => decreaseDate(new Date()));
+  const [toDate, setToDate] = React.useState(() => new Date());
   const { signOut, refreshToken } = React.useContext(AuthContext);
   const scrollY = React.useRef(new Animated.Value(0)).current;
+
+  const renderItem = ({item}) => (
+    <AlbumsHorizontal key={item['release_date']} data={item} heading={item['release_date']} />
+  );
 
   const opacityIn = scrollY.interpolate({
     inputRange: [0, 128],
@@ -33,10 +46,6 @@ const Home = () => {
     extrapolate: 'clamp'
   });
 
-  const timeline = Object.keys(data).map((key) => (
-    <AlbumsHorizontal key={key} data={data[key]} heading={key} />
-  ));
-
   const getAlbums = async () => {
     try {
       let expDate = await SecureStore.getItemAsync('accessTokenExpirationDate');
@@ -45,11 +54,17 @@ const Home = () => {
       }
 
       let token = await SecureStore.getItemAsync('accessToken');
-      const response = await fetch('http://127.0.0.1:5000/', {
+      let params = new URLSearchParams({
+        from_date: fromDate.toISOString().substring(0, 10),
+        to_date: toDate.toISOString().substring(0, 10),
+      })
+      const response = await fetch(`http://127.0.0.1:5000/timeline?${params}`, {
       headers: {"Authorization" : `Bearer ${token}`}
      });
      const json = await response.json();
-     setData(json);
+     setData([...data, ...json]);
+     setFromDate(decreaseDate(fromDate));
+     setToDate(decreaseDate(toDate));
    } catch (error) {
      console.error(error);
    } finally {
@@ -72,20 +87,18 @@ const Home = () => {
       </Animated.View>
 
       {isLoading ? <ActivityIndicator/> : (
-        <Animated.ScrollView
+        <Animated.FlatList
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
             { useNativeDriver: true }
           )}
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={item => item.release_date}
           scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
           style={gStyle.container}
-        >
-          <View style={gStyle.spacer16} />
-
-          {timeline}
-
-        </Animated.ScrollView>
+          onEndReached={getAlbums}
+        />
       )}
 
     </React.Fragment>

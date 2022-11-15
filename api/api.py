@@ -1,10 +1,12 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from confluent_kafka import Producer, KafkaError
 import json
 import requests
 from confluent_kafka import Producer, KafkaError
 from astrapy.client import create_astra_client
 import os
+from operator import itemgetter
+from itertools import groupby
 
 ASTRA_DB_ID = os.environ['ASTRA_DB_ID']
 ASTRA_DB_REGION = os.environ['ASTRA_DB_REGION']
@@ -35,8 +37,10 @@ topic = 'load-new-artists'
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
+@app.route("/timeline")
+def timeline():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
     followers = requests.get('https://api.spotify.com/v1/me/following?type=artist', headers={'Authorization': request.headers['Authorization']})
     artist_ids = [artist['id'] for artist in followers.json()['artists']['items']]
 
@@ -46,7 +50,7 @@ def home():
     params = {
         'where': json.dumps({
             'artist_id': {'$in': artist_ids},
-            'release_date': {'$gt': '2000-10-01'}
+            'release_date': {'$lte': to_date, '$gt': from_date}
         })
     }
     res = requests.get(url, headers=headers, params=params)
@@ -59,35 +63,32 @@ def home():
         j_res = json.loads(res.text)
         albums.extend(j_res['data'])
 
-    grouped_albums = {}
-    for row in albums:
-        album_id = row['id']
-        album_group = row['album_group']
-        if album_id not in grouped_albums:
-            grouped_albums[album_id] = {
-                'id': row['id'],
-                'name': row['name'],
-                'image_url': row['image_url'],
-                'release_date': row['release_date'],
-                'album_type': row['album_type'],
-                'artists': row['album_artists'],
+    result = []
+    albums = sorted(albums, key=itemgetter('release_date', 'id'), reverse=True)
+    for release_date, date_group in groupby(albums, itemgetter('release_date')):
+        date_row = {
+            'release_date': release_date,
+            'singles': [],
+            'albums': []
+        }
+        for album_id, album_group in groupby(list(date_group), itemgetter('id')):
+            album_row = {
                 'appearances_by': []
             }
-        if album_group == 'appears_on':
-            grouped_albums[album_id]['appearances_by'].append(row['artist_name'])
+            for album in album_group:
+                if 'id' not in album_row:
+                    album_row['id'] = album_id
+                    album_row['name'] = album['name']
+                    album_row['image_url'] = album['image_url']
+                    album_row['release_date'] = album['release_date']
+                    album_row['album_type'] = album['album_type']
+                    album_row['artists'] = album['album_artists']
+                if album['album_group'] == 'appears_on':
+                    album_row['appearances_by'].append(album['artist_name'])
+            if album_row['album_type'] == 'album':
+                date_row['albums'].append(album_row)
+            else:
+                date_row['singles'].append(album_row)
+        result.append(date_row)
 
-    results = {}
-    for _, row in grouped_albums.items():
-        date = row['release_date']
-        album_type = row['album_type']
-        if date not in results:
-            results[date] = {
-                'singles': [],
-                'albums': []
-            }
-        if album_type == 'single':
-            results[date]['singles'].append(row)
-        elif album_type == 'album':
-            results[date]['albums'].append(row)
-
-    return json.dumps(dict(sorted(results.items(), reverse=True)))
+    return jsonify(result)
