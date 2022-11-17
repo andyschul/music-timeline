@@ -3,7 +3,7 @@ import json
 import spotipy
 import requests
 from spotipy.oauth2 import SpotifyClientCredentials
-from cleaner import data_cleaner, album_cleaner
+from cleaner import album_cleaner
 import aiohttp
 import asyncio
 import os

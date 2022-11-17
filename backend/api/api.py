@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify
-from confluent_kafka import Producer, KafkaError
 import json
 import requests
-from confluent_kafka import Producer, KafkaError
-from astrapy.client import create_astra_client
+from confluent_kafka import Producer
 import os
 from operator import itemgetter
 from itertools import groupby
@@ -19,10 +17,6 @@ headers = {
   'content-type': 'application/json',
   'x-cassandra-token': ASTRA_DB_APPLICATION_TOKEN
 }
-
-astra_client = create_astra_client(astra_database_id=ASTRA_DB_ID,
-                                   astra_database_region=ASTRA_DB_REGION,
-                                   astra_application_token=ASTRA_DB_APPLICATION_TOKEN)
 
 producer_conf = {
     'bootstrap.servers': os.environ['KAFKA_BOOTSTRAP_SERVERS'],
@@ -92,3 +86,7 @@ def timeline():
         result.append(date_row)
 
     return jsonify(result)
+
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
