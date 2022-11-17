@@ -1,14 +1,13 @@
 from confluent_kafka import Consumer
-from cassandra.cluster import Cluster
 import json
-from astrapy.client import create_astra_client
-from pathlib import Path
 import spotipy
+import requests
 from spotipy.oauth2 import SpotifyClientCredentials
-from functools import lru_cache
-cluster = Cluster()
-session = cluster.connect()
+from cleaner import data_cleaner, album_cleaner
+import aiohttp
+import asyncio
 import os
+import time
 
 SPOTIFY_CLIENT_ID = os.environ['SPOTIFY_CLIENT_ID']
 SPOTIFY_CLIENT_SECRET = os.environ['SPOTIFY_CLIENT_SECRET']
@@ -18,23 +17,34 @@ ASTRA_DB_APPLICATION_TOKEN = os.environ['ASTRA_DB_APPLICATION_TOKEN']
 ASTRA_DB_KEYSPACE = 'music'
 ASTRA_DB_ALBUMS_TABLE = 'albums'
 ASTRA_DB_ARTISTS_TABLE = 'artists'
-LOAD_LIMIT = 20
 
 spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIFY_CLIENT_ID, client_secret=SPOTIFY_CLIENT_SECRET))
-astra_client = create_astra_client(astra_database_id=ASTRA_DB_ID,
-                                   astra_database_region=ASTRA_DB_REGION,
-                                   astra_application_token=ASTRA_DB_APPLICATION_TOKEN)
 
-def artist_is_loaded(artist_id):
-  query = {
-    'id': {'$eq': artist_id}
-  }
-  res = astra_client.rest.search_table(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_ARTISTS_TABLE, query=query)
-  if 'count' in res and res['count'] == 1:
-    return True
-  return False
+headers = {
+  'content-type': 'application/json',
+  'x-cassandra-token': ASTRA_DB_APPLICATION_TOKEN
+}
 
-def load_artist(artist_id):
+async def load_album(session, data):
+    url = f'https://{ASTRA_DB_ID}-{ASTRA_DB_REGION}.apps.astra.datastax.com/api/rest/v2/keyspaces/{ASTRA_DB_KEYSPACE}/{ASTRA_DB_ALBUMS_TABLE}'
+    async with session.post(url, data=json.dumps(data), headers=headers) as resp:
+        res = await resp.json()
+        return res
+
+
+def get_loaded_artists(artist_ids):
+    url = f'https://{ASTRA_DB_ID}-{ASTRA_DB_REGION}.apps.astra.datastax.com/api/rest/v2/keyspaces/{ASTRA_DB_KEYSPACE}/{ASTRA_DB_ARTISTS_TABLE}'
+    params = {
+        'where': json.dumps({
+            'id': {'$in': artist_ids}
+        })
+    }
+    res = requests.get(url, headers=headers, params=params)
+    res = json.loads(res.text)
+    return set([artist['id'] for artist in res['data']])
+
+def get_artist_albums_from_spotify(artist_id):
+  start_time = time.time()
   artist = spotify.artist(artist_id)
   results = spotify.artist_albums(artist_id, country='US')
   albums = results['items']
@@ -42,57 +52,62 @@ def load_artist(artist_id):
   while results['next']:
       results = spotify.next(results)
       albums.extend(results['items'])
+  load_time = "--- %s seconds ---" % (time.time() - start_time)
+  print(f'collected {len(albums)} albums from spotify in {load_time}')
+  return (artist, albums)
 
-  # TODO: Remove clean albums from results
+async def load_artist(artist_id):
+  artist, albums = get_artist_albums_from_spotify(artist_id)
 
-  count = 0
-  for album in albums:
-    if count > LOAD_LIMIT:
-      break
-    count += 1
-    if album['release_date_precision'] != 'day' or album['album_type'] == 'compilation':
-        continue
-    data = {
-      'id': album['id'],
-      'href': album['href'],
-      'image_url': album['images'][0]['url'],
-      'name': album['name'],
-      'release_date': album['release_date'],
-      'album_type': album['album_type'],
-      'album_group': album['album_group'],
-      'album_artists': [{key : val for key, val in sub.items() if key != 'external_urls'} for sub in album['artists']],
-      'uri': album['uri'],
-      'total_tracks': album['total_tracks'],
-      'artist_id': artist['id'],
-      'artist_uri': artist['uri'],
-      'artist_name': artist['name'],
-      'artist_href': artist['href'],
-      'artist_image': artist['images'][0]['url'],
-      'artist_genres': artist['genres']
+  # Remove unwanted albums from results
+  start_time = time.time()
+  filtered_albums = album_cleaner(albums)
+  load_time = "--- %s seconds ---" % (time.time() - start_time)
+  print(f'filtered to {len(filtered_albums)} albums in {load_time}')
+
+  async with aiohttp.ClientSession() as session:
+    tasks = []
+
+    for album in filtered_albums:
+        data = {
+        'id': album['id'],
+        'href': album['href'],
+        'image_url': album['images'][0]['url'],
+        'name': album['name'],
+        'release_date': album['release_date'],
+        'album_type': album['album_type'],
+        'album_group': album['album_group'],
+        'album_artists': [{key : val for key, val in sub.items() if key != 'external_urls'} for sub in album['artists']],
+        'uri': album['uri'],
+        'total_tracks': album['total_tracks'],
+        'artist_id': artist['id'],
+        'artist_uri': artist['uri'],
+        'artist_name': artist['name'],
+        'artist_href': artist['href'],
+        'artist_image': artist['images'][0]['url'],
+        'artist_genres': artist['genres']
+        }
+        tasks.append(asyncio.ensure_future(load_album(session, data)))
+
+    await asyncio.gather(*tasks)
+
+    artist_data = {
+        'id': artist['id'],
+        'uri': artist['uri'],
+        'name': artist['name'],
+        'href': artist['href'],
+        'image': artist['images'][0]['url'],
+        'genres': artist['genres']
     }
-    # load each album into cassandra
-    row = astra_client.rest.add_row(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_ALBUMS_TABLE, row=data)
-    print(row)
+    url = f'https://{ASTRA_DB_ID}-{ASTRA_DB_REGION}.apps.astra.datastax.com/api/rest/v2/keyspaces/{ASTRA_DB_KEYSPACE}/{ASTRA_DB_ARTISTS_TABLE}'
+    requests.post(url, headers=headers, data=json.dumps(artist_data))
 
-  print('loading artist')
-  artist_data = {
-    'id': artist['id'],
-    'uri': artist['uri'],
-    'name': artist['name'],
-    'href': artist['href'],
-    'image': artist['images'][0]['url'],
-    'genres': artist['genres']
-  }
-  row = astra_client.rest.add_row(keyspace=ASTRA_DB_KEYSPACE, table=ASTRA_DB_ARTISTS_TABLE, row=artist_data)
-  print(row)
 
-@lru_cache(maxsize=None)
-def check_followed_artists(followed_artists):
-    print('checking artists')
-    for artist_id in followed_artists:
-        if not artist_is_loaded(artist_id):
-            print(f'loading artist: {artist_id}')
-            load_artist(artist_id)
+# TODO: cache with redis
+def get_new_artists(followed_artists):
+    loaded_artists = get_loaded_artists(followed_artists)
+    return [artist_id for artist_id in followed_artists if artist_id not in loaded_artists]
+
 
 if __name__ == '__main__':
     topic = 'load-new-artists'
@@ -122,12 +137,18 @@ if __name__ == '__main__':
                 print('error: {}'.format(msg.error()))
             else:
                 # Check for Kafka message
-                record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
                 print(data)
-                check_followed_artists(tuple(data['artist_ids']))
-                
+                artist_ids = get_new_artists(tuple(data['artist_ids']))
+
+                for artist_id in artist_ids:
+                    print(f'loading new artist: {artist_id}')
+                    start_time = time.time()
+                    asyncio.run(load_artist(artist_id))
+                    load_time = "--- %s seconds ---" % (time.time() - start_time)
+                    print(f'finished loading artist: {artist_id} in {load_time}')
+
     except KeyboardInterrupt:
         pass
     finally:
