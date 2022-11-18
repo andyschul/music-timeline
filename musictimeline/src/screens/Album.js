@@ -14,6 +14,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { colors, device, gStyle, images } from '../constants';
+import { formatDate } from '../helpers/helpers';
 
 // components
 import LinearGradient from '../components/LinearGradient';
@@ -175,7 +176,7 @@ const Album = ({ navigation, route }) => {
         </View>
         <View style={styles.containerAlbum}>
           <Text style={styles.albumInfo}>
-            {`Album by ${album.artists[0].name} · ${album.release_date}`}
+            {`Album by ${album.artists.map(a => a['name']).join(', ')} · ${formatDate(album.release_date)}`}
           </Text>
         </View>
       </View>
@@ -226,8 +227,9 @@ const Album = ({ navigation, route }) => {
                 onPress={onChangeSong}
                 songData={{
                   album: album.name,
-                  artist: album.artist,
-                  length: track.seconds,
+                  artists: album.artists,
+                  images: album.images,
+                  length: track.duration_ms,
                   title: track.name
                 }}
               />

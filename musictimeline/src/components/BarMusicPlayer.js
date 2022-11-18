@@ -31,11 +31,11 @@ const BarMusicPlayer = ({ song }) => {
         <FontAwesome color={favoriteColor} name={favoriteIcon} size={20} />
       </TouchableOpacity>
 
-      {song && (
+      {song.hasOwnProperty('title') && (
         <View>
           <View style={styles.containerSong}>
             <Text style={styles.title}>{`${song.title} · `}</Text>
-            <Text style={styles.artist}>{song.artist}</Text>
+            <Text style={styles.artist}>{song.artists.map(a => a['name']).join(', ')}</Text>
           </View>
           <View style={[gStyle.flexRowCenter, gStyle.mTHalf]}>
             <FontAwesome
@@ -43,7 +43,7 @@ const BarMusicPlayer = ({ song }) => {
               name="bluetooth-b"
               size={14}
             />
-            <Text style={styles.device}>Caleb&apos;s Beatsx</Text>
+            <Text style={styles.device}>Bluetooth</Text>
           </View>
         </View>
       )}
@@ -67,7 +67,7 @@ BarMusicPlayer.defaultProps = {
 BarMusicPlayer.propTypes = {
   // optional
   song: PropTypes.shape({
-    artist: PropTypes.string,
+    artists: PropTypes.array,
     title: PropTypes.string
   })
 };

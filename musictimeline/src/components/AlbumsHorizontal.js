@@ -10,10 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, gStyle, images } from '../constants';
-
-const displayArtists = (artists) => {
-  return artists.map(a => a['name']).join(', ')
-}
+import { formatDate } from '../helpers/helpers';
 
 const displayAppearances = (artists) => {
   if (!artists.length) {
@@ -44,7 +41,7 @@ const albumList = (data, tagline) => {
               <Image source={{uri:item.image_url}} style={styles.image} />
             )}
           </View>
-          <Text style={styles.artist}>{displayArtists(item.artists)}</Text>
+          <Text style={styles.artist}>{item.artists.map(a => a['name']).join(', ')}</Text>
           <Text style={styles.title}>{item.name}</Text>
           <Text style={styles.title}>{displayAppearances(item.appearances_by)}</Text>
         </TouchableOpacity>
@@ -55,11 +52,12 @@ const albumList = (data, tagline) => {
   )
 }
 
-const AlbumsHorizontal = ({ data, heading, tagline }) => {
+const AlbumsHorizontal = ({ data, heading, idx }) => {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      {heading && <Text style={styles.heading}>{heading}</Text>}
+      {!idx && <View style={gStyle.spacer16} />}
+      {heading && <Text style={styles.heading}>{formatDate(heading)}</Text>}
 
       {data.singles.length > 0 && albumList(data.singles, "Singles")}
       {data.albums.length > 0 && albumList(data.albums, "Albums")}

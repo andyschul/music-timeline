@@ -8,6 +8,7 @@ import AuthContext from './src/context/AuthContext';
 import authReducer from './src/reducers/authReducer'
 import SignInScreen from './src/screens/SignIn'
 import RootStack from './src/navigation/RootStack';
+import AppState from './src/context/AppState';
 
 export default function App({ navigation }) {
   const [state, dispatch] = React.useReducer(authReducer,
@@ -96,7 +97,9 @@ export default function App({ navigation }) {
       {state.userToken == null ? (
         <SignInScreen/>
       ) : (
-        <RootStack />
+        <AppState>
+          <RootStack />
+        </AppState>
       )}
     </AuthContext.Provider>
   );
