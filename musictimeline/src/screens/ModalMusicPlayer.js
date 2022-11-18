@@ -46,7 +46,7 @@ const ModalMusicPlayer = (props) => {
             <Text ellipsizeMode="tail" numberOfLines={1} style={styles.song}>
               {currentSongData.title}
             </Text>
-            <Text style={styles.artist}>{currentSongData.artist}</Text>
+            <Text style={styles.artist}>{currentSongData.artists.map(a => a['name']).join(', ')}</Text>
           </View>
           <View style={styles.containerFavorite}>
             <TouchIcon

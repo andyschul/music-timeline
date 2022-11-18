@@ -30,8 +30,8 @@ const Home = () => {
   const { signOut, refreshToken } = React.useContext(AuthContext);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
-  const renderItem = ({item}) => (
-    <AlbumsHorizontal key={item['release_date']} data={item} heading={item['release_date']} />
+  const renderItem = ({item, index}) => (
+    <AlbumsHorizontal key={item['release_date']} data={item} heading={item['release_date']} idx={index} />
   );
 
   const opacityIn = scrollY.interpolate({
@@ -58,7 +58,7 @@ const Home = () => {
         from_date: fromDate.toISOString().substring(0, 10),
         to_date: toDate.toISOString().substring(0, 10),
       })
-      const response = await fetch(`http://127.0.0.1:5000/timeline?${params}`, {
+      const response = await fetch(`https://musictimeline.azurewebsites.net/timeline?${params}`, {
       headers: {"Authorization" : `Bearer ${token}`}
      });
      const json = await response.json();

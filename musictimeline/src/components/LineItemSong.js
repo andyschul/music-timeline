@@ -23,7 +23,7 @@ const LineItemSong = ({ active, downloaded, onPress, songData }) => {
               <Ionicons color={colors.blackBg} name="arrow-down" size={14} />
             </View>
           )}
-          <Text style={styles.artist}>{songData.artist}</Text>
+          <Text style={styles.artist}>{songData.artists.map(a => a['name']).join(', ')}</Text>
         </View>
       </TouchableOpacity>
 
@@ -44,8 +44,8 @@ LineItemSong.propTypes = {
   onPress: PropTypes.func.isRequired,
   songData: PropTypes.shape({
     album: PropTypes.string.isRequired,
-    artist: PropTypes.string.isRequired,
-    image: PropTypes.string.isRequired,
+    artists: PropTypes.array.isRequired,
+    images: PropTypes.array.isRequired,
     length: PropTypes.number.isRequired,
     title: PropTypes.string.isRequired
   }).isRequired,

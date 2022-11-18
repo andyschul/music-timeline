@@ -9,13 +9,7 @@ class AppState extends React.Component {
     super();
 
     this.state = {
-      currentSongData: {
-        album: 'Swimming',
-        artist: 'Mac Miller',
-        image: 'swimming',
-        length: 312,
-        title: 'So It Goes'
-      },
+      currentSongData: {},
       isLoading: true,
       showMusicBar: true
     };
