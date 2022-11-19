@@ -23,13 +23,19 @@ export default function App({ navigation }) {
     // Fetch the token from storage then navigate to our appropriate place
     const bootstrapAsync = async () => {
       let userToken;
-
+      let expDate;
+      let refreshToken;
       try {
         // Restore token stored in `SecureStore` or any other encrypted storage
         await SplashScreen.preventAutoHideAsync();
-        userToken = await SecureStore.getItemAsync('accessToken');
-        expDate = await SecureStore.getItemAsync('accessTokenExpirationDate');
-        refreshToken = await SecureStore.getItemAsync('refreshToken');
+        try {
+          userToken = await SecureStore.getItemAsync('accessToken');
+          expDate = await SecureStore.getItemAsync('accessTokenExpirationDate');
+          refreshToken = await SecureStore.getItemAsync('refreshToken');
+        } catch (e) {
+          console.log(e)
+        }
+
         await func.loadAssetsAsync();
       } catch (e) {
         // Restoring token failed
@@ -37,7 +43,7 @@ export default function App({ navigation }) {
       }
 
       // After restoring token, we may need to validate it in production apps
-      if (expDate < new Date().toISOString()) {
+      if (expDate && expDate < new Date().toISOString()) {
         let result = await authHandler.refreshLogin(refreshToken);
         await SecureStore.setItemAsync('accessToken', result.accessToken);
         await SecureStore.setItemAsync('refreshToken', result.refreshToken);
