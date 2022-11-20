@@ -41,7 +41,11 @@ def album_cleaner(albums):
   albums_by_name = {}
   for album in albums:
     if album_filter(album):
-      album_name = album['name']
+      if 'artist_id' in album:
+        album_name = album['name'] + album['artist_id']
+      else:
+        album_name = album['name']
+
       if album_name not in albums_by_name:
         albums_by_name[album_name] = [album]
       else:
