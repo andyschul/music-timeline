@@ -84,7 +84,7 @@ async def load_artist(artist_id):
         'artist_uri': artist['uri'],
         'artist_name': artist['name'],
         'artist_href': artist['href'],
-        'artist_image': artist['images'][0]['url'],
+        'artist_image': artist['images'][0]['url'] if artist['images'] else '',
         'artist_genres': artist['genres']
         }
         tasks.append(asyncio.ensure_future(load_album(session, data)))
