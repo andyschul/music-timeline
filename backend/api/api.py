@@ -31,15 +31,8 @@ topic = 'load-new-artists'
 
 app = Flask(__name__)
 
-@app.route("/timeline")
-def timeline():
-    from_date = request.args.get('from_date')
-    to_date = request.args.get('to_date')
-    followers = requests.get('https://api.spotify.com/v1/me/following?type=artist', headers={'Authorization': request.headers['Authorization']})
-    artist_ids = [artist['id'] for artist in followers.json()['artists']['items']]
-
-    producer.produce(topic, key="spotify", value=json.dumps({'artist_ids': artist_ids}))
-
+# partition limit for query is 20, so we need to limit to a max of 20 artist_ids
+def query_db_albums(artist_ids, to_date, from_date):
     url = f'https://{ASTRA_DB_ID}-{ASTRA_DB_REGION}.apps.astra.datastax.com/api/rest/v2/keyspaces/{ASTRA_DB_KEYSPACE}/{ASTRA_DB_ALBUMS_TABLE}'
     params = {
         'where': json.dumps({
@@ -48,7 +41,6 @@ def timeline():
         })
     }
     res = requests.get(url, headers=headers, params=params)
-
     j_res = json.loads(res.text)
     albums = j_res['data']
     while 'pageState' in j_res:
@@ -56,6 +48,28 @@ def timeline():
         res = requests.get(url, headers=headers, params=params)
         j_res = json.loads(res.text)
         albums.extend(j_res['data'])
+
+    return albums
+
+@app.route("/timeline")
+def timeline():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    albums = []
+    total_artist_ids = []
+
+    result = requests.get('https://api.spotify.com/v1/me/following?type=artist&limit=20', headers={'Authorization': request.headers['Authorization']}).json()['artists']
+    artist_ids = [artist['id'] for artist in result['items']]
+    albums.extend(query_db_albums(artist_ids, to_date, from_date))
+    total_artist_ids.extend(artist_ids)
+
+    while result['next']:
+        result = requests.get(result['next'], headers={'Authorization': request.headers['Authorization']}).json()['artists']
+        artist_ids = [artist['id'] for artist in result['items']]
+        albums.extend(query_db_albums(artist_ids, to_date, from_date))
+        total_artist_ids.extend(artist_ids)
+
+    producer.produce(topic, key="spotify", value=json.dumps({'artist_ids': total_artist_ids}))
 
     result = []
     albums = sorted(albums, key=itemgetter('release_date', 'id'), reverse=True)
