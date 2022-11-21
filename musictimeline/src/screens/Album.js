@@ -8,6 +8,7 @@ import {
   Switch,
   Text,
   View,
+  TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -21,6 +22,8 @@ import LinearGradient from '../components/LinearGradient';
 import LineItemSong from '../components/LineItemSong';
 import TouchIcon from '../components/TouchIcon';
 import TouchText from '../components/TouchText';
+
+// import { getUniqueId, getManufacturer } from 'react-native-device-info';
 
 // mock data
 import albums from '../mockdata/albums';
@@ -52,6 +55,25 @@ const Album = ({ navigation, route }) => {
       headers: {"Authorization" : `Bearer ${token}`}
      });
      const json = await response.json();
+
+    //  set album duration
+     let albumDuration = json.tracks.items.reduce((accumulator, object) => {
+        return accumulator + object.duration_ms;
+     }, 0);
+     albumDuration = new Date(albumDuration).toISOString().substring(11, 16);
+     albumDuration = albumDuration.split(":")
+
+     if (parseInt(albumDuration[0]) === 0) {
+      albumDuration = String(parseInt(albumDuration[1])).concat("m ")
+     } else {
+      albumDuration = String(parseInt(albumDuration[0])).concat("h ").concat(String(parseInt(albumDuration[1])).concat("m "))
+     }
+     json['duration'] = albumDuration;
+
+     //  set album artists
+     let albumArtists = json.artists.map((artist) => (artist.name)).join(', ');
+     json['albumArtists'] = albumArtists;
+
      setAlbum(json);
    } catch (error) {
      console.error(error);
@@ -59,6 +81,7 @@ const Album = ({ navigation, route }) => {
      setLoading(false);
    }
  }
+
 
   React.useEffect(() => {
     getAlbum();
@@ -92,6 +115,25 @@ const Album = ({ navigation, route }) => {
       setDownloaded(val);
     }
   };
+
+  // playSongSpotify = async (songData) => {
+  //   let token = SecureStore.getItemAsync('accessToken');
+  //     let deviceId = await getUniqueId();
+  //     const response = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+  //     headers: {"Authorization" : `Bearer ${token}`, "Content-Type": "application/json"},
+  //     method: 'post',
+  //     query: {
+  //       "device_id": deviceId
+  //     },
+  //     body: {
+  //         "context_uri": songData.uri,
+  //         "offset": {
+  //           "position": songData.position
+  //         },
+  //         "position_ms": 0
+  //       }
+  //     });
+  // }
 
   const onChangeSong = (songData) => {
     // update local state
@@ -141,10 +183,16 @@ const Album = ({ navigation, route }) => {
           <LinearGradient fill={album.backgroundColor} height={89} />
         </Animated.View>
         <View style={styles.header}>
-          <TouchIcon
-            icon={<Feather color={colors.white} name="chevron-left" />}
+          <TouchableOpacity
+            activeOpacity={gStyle.activeOpacity}
             onPress={() => navigation.goBack(null)}
-          />
+            style={styles.back}
+          >
+            <Feather color={colors.white} name={"chevron-left"} size={22} />
+            <Text style={styles.back_txt}>
+              {`${formatDate(album.release_date)}`}
+            </Text>
+          </TouchableOpacity>
           <Animated.View style={{ opacity: opacityShuffle }}>
             <Text style={styles.headerTitle}>{album.name}</Text>
           </Animated.View>
@@ -175,9 +223,45 @@ const Album = ({ navigation, route }) => {
           </Text>
         </View>
         <View style={styles.containerAlbum}>
-          <Text style={styles.albumInfo}>
-            {`Album by ${album.artists.map(a => a['name']).join(', ')} · ${formatDate(album.release_date)}`}
-          </Text>
+          <View style={styles.spaceArtistProducer}>
+            <View style={styles.entity}>
+              <Feather color={colors.greyInactive} name={"user"} size={17} /> 
+              <Text style={styles.albumInfo}>
+                {`${album.artists.map(a => a['name']).join(', ')}`}
+                
+                {/* album.tracks.items.map((track) => (
+              <LineItemSong
+                active={song === track.name}
+                // downloaded={downloaded}
+                key={track.name}
+                onPress={onChangeSong}
+                songData={{
+                  artists: track.artists,
+                  duration: track.duration_ms,
+                  track_id: track.id,
+                  title: track.name,
+                  album_uri: album.uri,
+                  position: track.track_number
+                }}
+              />
+            ) */}
+
+              </Text>
+            </View>
+            {/* <View style={styles.entity}>
+              <Image
+                style={{
+                  width: 15,
+                  height: 15,
+                  borderRadius: 0,
+                }}
+                source={require('../assets/producer_icon.png')} 
+              />
+              <Text style={styles.albumInfo}>
+                 Coming Soon
+              </Text>
+            </View> */}
+          </View>
         </View>
       </View>
 
@@ -202,12 +286,15 @@ const Album = ({ navigation, route }) => {
               onPress={() => null}
               style={styles.btn}
               styleText={styles.btnText}
-              text="Shuffle Play"
+              text="Play"
             />
+            <Text style={styles.albumInfo}>
+              {`${album.duration}`}
+            </Text>
           </View>
         </View>
         <View style={styles.containerSongs}>
-          <View style={styles.row}>
+          {/* <View style={styles.row}>
             <Text style={styles.downloadText}>
               {downloaded ? 'Downloaded' : 'Download'}
             </Text>
@@ -216,21 +303,22 @@ const Album = ({ navigation, route }) => {
               onValueChange={(val) => onToggleDownloaded(val)}
               value={downloaded}
             />
-          </View>
+          </View> */}
 
           {album.tracks &&
             album.tracks.items.map((track) => (
               <LineItemSong
                 active={song === track.name}
-                downloaded={downloaded}
+                // downloaded={downloaded}
                 key={track.name}
                 onPress={onChangeSong}
                 songData={{
-                  album: album.name,
-                  artists: album.artists,
-                  images: album.images,
-                  length: track.duration_ms,
-                  title: track.name
+                  artists: track.artists,
+                  duration: track.duration_ms,
+                  track_id: track.id,
+                  title: track.name,
+                  album_uri: album.uri,
+                  position: track.track_number
                 }}
               />
             ))}
@@ -293,6 +381,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: '100%',
+    height:'100%',
     zIndex: device.web ? 5 : 0
   },
   containerImage: {
@@ -303,9 +392,9 @@ const styles = StyleSheet.create({
     zIndex: device.web ? 20 : 0
   },
   image: {
-    height: 148,
+    height: 150,
     marginBottom: device.web ? 0 : 16,
-    width: 148
+    width: 150
   },
   containerTitle: {
     marginTop: device.web ? 8 : 0,
@@ -324,13 +413,15 @@ const styles = StyleSheet.create({
   albumInfo: {
     ...gStyle.textSpotify12,
     color: colors.greyInactive,
-    marginBottom: 48
+    marginTop: 7,
+    marginBottom: 3,
+    textAlign: 'center'
   },
   containerScroll: {
     paddingTop: 89
   },
   containerSticky: {
-    marginTop: device.iPhoneNotch ? 238 : 194
+    marginTop: device.iPhoneNotch ? 280 : 194
   },
   containerShuffle: {
     alignItems: 'center',
@@ -348,8 +439,8 @@ const styles = StyleSheet.create({
   btn: {
     backgroundColor: colors.brandPrimary,
     borderRadius: 25,
-    height: 50,
-    width: 220
+    height: 35,
+    width: 110
   },
   btnText: {
     ...gStyle.textSpotifyBold16,
@@ -369,9 +460,30 @@ const styles = StyleSheet.create({
     padding: 16,
     width: '100%'
   },
+  entity: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'column',
+    padding: 5
+  },
+  spaceArtistProducer: {
+    justifyContent: 'space-between',
+    flexDirection: 'column'
+  },
   downloadText: {
     ...gStyle.textSpotifyBold18,
     color: colors.white
+  },
+  back: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
+  back_txt: {
+    ...gStyle.textSpotify12,
+    color: colors.greyInactive,
+    paddingTop: 3,
+    paddingLeft: 3,
   }
 });
 
