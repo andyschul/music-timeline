@@ -8,9 +8,15 @@ import { colors, gStyle } from '../constants';
 const LineItemSong = ({ active, downloaded, onPress, songData }) => {
   const activeColor = active ? colors.brandPrimary : colors.white;
   const [isLoading, setLoading] = React.useState(true);
-  const [popularity, setPopularity] = React.useState({});
+  const [track, setTrack] = React.useState({});
 
-  const getPopularity = async () => {
+  const getPopularityColor = (popularity) => {
+    let ceilPopularity = Math.ceil(popularity/10)? Math.ceil(popularity/10) : 1
+    let color = [`#9e0142`, `#d53e4f`, `#f46d43`, `#fdae61`, `#fee08b`, `#e6f598`, `#abdda4`, `#66c2a5`, `#3288bd`, `#5e4fa2`]
+    return color[ceilPopularity-1]
+  }
+
+  const getTrack = async () => {
     try {
       let token = await SecureStore.getItemAsync('accessToken');
       const response = await fetch(`https://api.spotify.com/v1/tracks/${songData.track_id}`, {
@@ -18,8 +24,8 @@ const LineItemSong = ({ active, downloaded, onPress, songData }) => {
      });
      const json = await response.json();
 
-    //  set track popularity
-    setPopularity(json);
+    //  set track 
+    setTrack(json);
    } catch (error) {
      console.error(error);
    } finally {
@@ -31,29 +37,33 @@ const LineItemSong = ({ active, downloaded, onPress, songData }) => {
   dur = String(parseInt(dur.substring(0,2))).concat(dur.substring(2,5))
 
   React.useEffect(() => {
-    getPopularity();
+    getTrack();
   }, []);
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        activeOpacity={gStyle.activeOpacity}
-        onPress={() => onPress(songData)}
-        style={styles.track}
-      >
-          <View style={styles.containerLeft}>
-            <Text numberOfLines={1} style={[styles.title, { color: activeColor }]}>
-              {songData.title}
-            </Text>
-            <Text style={styles.artist}>
-              {songData.artists.map(a => a['name']).join(', ')}
-            </Text>
-          </View>
-          <View style={styles.containerRight}>
-            <Text style={styles.dur}>{dur}</Text>
-            <View style={[styles.popularityBar, { color: activeColor }]}></View>   
-          </View>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      activeOpacity={gStyle.activeOpacity}
+      onPress={() => onPress(songData)}
+      style={styles.container}
+    >
+        <View style={styles.containerLeft}>
+          <Text numberOfLines={1} style={[styles.title, { color: activeColor }]}>
+            {songData.title}
+          </Text>
+          <Text style={styles.artist}>
+            {songData.artists.map(a => a['name']).join(', ')}
+          </Text>
+        </View>
+        <View style={styles.containerRight}>
+          <Text style={styles.dur}>{dur}</Text>
+          <View style={styles.popularityContainer}>
+            <View style={[styles.popularityView, { backgroundColor: getPopularityColor(track.popularity) }]}>
+              <Text style={styles.popularityText}>
+                {Math.ceil(track.popularity/10)? Math.ceil(track.popularity/10) : 1}
+              </Text>
+            </View>
+          </View>   
+        </View>
+    </TouchableOpacity>
   );
 };
 
@@ -105,14 +115,10 @@ const styles = StyleSheet.create({
     color: colors.greyInactive
   },
   containerRight: {
-    alignItems: 'flex-end',
-    flex: 1
-  },
-  containerRight: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height:69
+    width:'15%'
   },
   containerLeft:{
     alignItems: 'flex-start',
@@ -122,15 +128,26 @@ const styles = StyleSheet.create({
     minHeight:69,
     width:'85%'
   },
-  popularityBar: {
-    height: '100%',
-    width:3,
-    backgroundColor: colors.brandPrimary,
+  popularityContainer: {
+    justifyContent: 'center',
+    height:69
+  },
+  popularityText: {
+    ...gStyle.textSpotify10,
+    color: colors.black
+  },
+  popularityView: {
+    alignItems: 'center',
+    justifyContent: 'center', 
+    padding:1.5, 
+    marginBottom:3,
+    marginRight:4,
+    width:15,
+    height:15,
+    borderRadius: 10,
+    opacity: 0.8
   },
   track:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%'
   },
   dur: {
     ...gStyle.textSpotify12,

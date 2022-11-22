@@ -193,8 +193,10 @@ const Album = ({ navigation, route }) => {
               {`${formatDate(album.release_date)}`}
             </Text>
           </TouchableOpacity>
-          <Animated.View style={{ opacity: opacityShuffle }}>
-            <Text style={styles.headerTitle}>{album.name}</Text>
+          <Animated.View style={{ opacity: opacityShuffle}}>
+            <View style={{ width: '100%'}}>
+              <Text adjustsFontSizeToFit numberOfLines={1} style={styles.headerTitle}>{album.name}</Text>
+            </View>
           </Animated.View>
           <TouchIcon
             icon={<Feather color={colors.white} name="more-horizontal" />}
@@ -226,27 +228,17 @@ const Album = ({ navigation, route }) => {
           <View style={styles.spaceArtistProducer}>
             <View style={styles.entity}>
               <Feather color={colors.greyInactive} name={"user"} size={17} /> 
-              <Text style={styles.albumInfo}>
-                {`${album.artists.map(a => a['name']).join(', ')}`}
-                
-                {/* album.tracks.items.map((track) => (
-              <LineItemSong
-                active={song === track.name}
-                // downloaded={downloaded}
-                key={track.name}
-                onPress={onChangeSong}
-                songData={{
-                  artists: track.artists,
-                  duration: track.duration_ms,
-                  track_id: track.id,
-                  title: track.name,
-                  album_uri: album.uri,
-                  position: track.track_number
-                }}
-              />
-            ) */}
-
-              </Text>
+              <View style={styles.artistButtons}>
+                {album.artists &&
+                  album.artists.map(artist => (
+                    <TouchText
+                      onPress={() => null}
+                      style={styles.artistBtn}
+                      styleText={styles.artistBtnText}
+                      text={artist['name']}
+                    />
+                  ))}
+              </View>
             </View>
             {/* <View style={styles.entity}>
               <Image
@@ -484,7 +476,27 @@ const styles = StyleSheet.create({
     color: colors.greyInactive,
     paddingTop: 3,
     paddingLeft: 3,
-  }
+  },
+   artistButtons:{
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginTop:7
+   },
+   artistBtn:{
+    backgroundColor: '#409c19',
+    borderRadius: 15,
+    paddingLeft: 7,
+    paddingRight: 7,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginLeft:3,
+    marginRight:3
+   },
+   artistBtnText:{
+    ...gStyle.textSpotify12,
+    color:colors.white
+   }
 });
 
 export default Album;
