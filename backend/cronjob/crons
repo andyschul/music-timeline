@@ -1,0 +1,4 @@
+SHELL=/bin/bash
+
+* * * * * python /var/scripts/load_new_releases.py >> /var/log/load_new_releases.log 2>&1
+# This line must be always present
