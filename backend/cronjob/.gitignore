@@ -1,0 +1,6 @@
+*.pyc
+ccloud-venv/
+.kafka.config
+venv
+__pycache__
+*.env
