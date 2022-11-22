@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
   },
   containerRight: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    width:'15%'
+    width:'13%'
   },
   containerLeft:{
     alignItems: 'flex-start',
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding:7,
     minHeight:69,
-    width:'85%'
+    width:'87%'
   },
   popularityContainer: {
     justifyContent: 'center',
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center', 
     padding:1.5, 
-    marginBottom:3,
-    marginRight:4,
+    marginBottom:1,
+    marginRight:5,
     width:15,
     height:15,
     borderRadius: 10,
@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
   dur: {
     ...gStyle.textSpotify12,
     color: colors.greyInactive,
-    padding:12
+    paddingLeft:0,
+    paddingRight:8
   }
 });
 
