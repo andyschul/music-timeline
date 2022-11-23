@@ -47,18 +47,18 @@ def build_album(album):
             album_copy['album_group'] = album['album_type']
         else:
             album_copy['album_group'] = 'appears_on'
-        album_copy['artist_id'] = artist['id'],
-        album_copy['artist_uri'] = artist['uri'],
-        album_copy['artist_name'] = artist['name'],
-        album_copy['artist_href'] = artist['href'],
-        album_copy['artist_image'] = artist['images'][0]['url'] if artist['images'] else '',
-        album_copy['artist_genres'] = artist['genres']
+        album_copy['artist_id'] = artist['id']
+        album_copy['artist_uri'] = artist['uri']
+        album_copy['artist_name'] = artist['name']
+        album_copy['artist_href'] = artist['href']
+        album_copy['artist_image'] = artist['images'][0]['url'] if artist.get('images') else ''
+        album_copy['artist_genres'] = artist.get('genres')
         results.append(album_copy)
 
     return results
 
 def join_album_ids(albums):
-    return ''.join([album['id'] for album in albums if album['album_type'] != 'compilation'])
+    return [album['id'] for album in albums if album['album_type'] != 'compilation']
 
 
 def handle_results(results):
