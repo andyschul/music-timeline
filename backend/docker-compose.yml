@@ -19,3 +19,10 @@ services:
       - python
       - "consumer.py"
     container_name: musictimeline_kafka
+  cronjob:
+    build: ./cronjob
+    env_file:
+      - ./cronjob/dev.env
+    volumes:
+      - ./kafka:/kafka
+    container_name: musictimeline_cronjob
